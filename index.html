@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CVEEEZ AI Coach</title>
+<meta name="description" content="CVEEEZ AI — your personal career coach (prototype)">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;600;700&display=swap" media="print" onload="this.media='all'">
+<style>
+  /* Layout: fixed header · mode rail · chat column · composer pinned to the bottom. Brand tokens from cveeez.netlify.app */
+  :root {
+    --brand: #0573B4; --brand-ink: #035487; --ink: #0D1B26; --muted: #52606D; --line: #DCE5EC;
+    --bg: #F4F8FB; --surface: #FFFFFF; --soft: #E8F2FA; --ok: #1E7F4F; --okbg: #E6F4EC; --warn: #9A5B00; --warnbg: #FDF2DF; --ai: #5B4BB7; --aibg: #EFEDFB;
+    --f-body: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif; --f-head: "Readex Pro", "IBM Plex Sans Arabic", "Segoe UI", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --brand:#4EA8E6; --brand-ink:#9CCFF2; --ink:#E4EDF4; --muted:#9FB0BE; --line:#26343F; --bg:#0E161D; --surface:#14202A; --soft:#172A38; --ok:#5FCB92; --okbg:#143224; --warn:#F2B661; --warnbg:#3A2A12; --ai:#B3A8F2; --aibg:#231F3D; color-scheme: dark; } }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--f-body); display: flex; flex-direction: column; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  header { background: var(--surface); border-bottom: 1px solid var(--line); padding: 10px max(16px, env(safe-area-inset-left)) 10px max(16px, env(safe-area-inset-right)); padding-top: calc(10px + env(safe-area-inset-top)); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 8px; direction: ltr; text-decoration: none; }
+  .mark, .word { background: var(--brand); display: inline-block; -webkit-mask: var(--src) center/contain no-repeat; mask: var(--src) center/contain no-repeat; }
+  .mark { width: 30px; height: 26px; } .word { width: 92px; height: 21px; }
+  .tag { font: 600 12px var(--f-head); background: var(--aibg); color: var(--ai); padding: 2px 10px; border-radius: 999px; }
+  .proto { font-size: 12px; color: var(--muted); }
+  .grow { flex: 1; }
+  .hbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 6px 12px; font-size: 13px; }
+  .hbtn.on { background: var(--soft); border-color: var(--brand); color: var(--brand-ink); }
+  main { flex: 1; min-height: 0; display: grid; grid-template-columns: 290px minmax(0, 1fr); }
+  @media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } aside { display: none; } aside.open { display: block; position: fixed; inset: 0; z-index: 30; overflow: auto; } }
+  aside { border-inline-end: 1px solid var(--line); background: var(--surface); padding: 16px; overflow: auto; }
+  aside h3 { font: 600 13px var(--f-head); color: var(--muted); letter-spacing: .02em; margin: 14px 0 8px; }
+  .modes { display: grid; gap: 6px; }
+  .mode { text-align: start; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; }
+  .mode b { font: 600 14px var(--f-head); } .mode span { font-size: 12.5px; color: var(--muted); }
+  .mode.on { border-color: var(--brand); background: var(--soft); }
+  .mtabs { display: none; gap: 6px; overflow-x: auto; padding: 8px max(16px, env(safe-area-inset-left)); border-bottom: 1px solid var(--line); background: var(--surface); }
+  .mtabs button { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-size: 13px; }
+  .mtabs button.on { border-color: var(--brand); background: var(--soft); color: var(--brand-ink); }
+  @media (max-width: 860px) { .mtabs { display: flex; } }
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg); font-size: 13.5px; }
+  .card .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .sbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 6px 10px; font-size: 13px; }
+  .sbtn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .chip { font-size: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
+  .engine { display: grid; gap: 6px; }
+  .engine label { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; }
+  .engine small { color: var(--muted); display: block; }
+  .progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 6px; } .progress i { display: block; height: 100%; background: var(--brand); width: 0; }
+  .chat { display: flex; flex-direction: column; min-height: 0; }
+  #log { flex: 1; overflow: auto; padding: 18px max(16px, env(safe-area-inset-left)) 18px max(16px, env(safe-area-inset-right)); display: flex; flex-direction: column; gap: 12px; }
+  .msg { max-width: 760px; width: fit-content; min-width: 0; }
+  .msg.user { align-self: flex-end; background: var(--brand); color: #fff; border-radius: 16px 16px 4px 16px; padding: 9px 14px; }
+  [dir="ltr"] .msg.user { border-radius: 16px 16px 16px 4px; }
+  .msg.bot { align-self: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 16px 16px 16px 4px; padding: 11px 14px; }
+  .msg .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .src { font: 600 11px var(--f-head); padding: 1px 8px; border-radius: 999px; }
+  .src.ai { background: var(--aibg); color: var(--ai); } .src.guided { background: var(--soft); color: var(--brand-ink); }
+  .src.profile { background: var(--warnbg); color: var(--warn); } .src.jobs { background: var(--okbg); color: var(--ok); }
+  .src.voice { background: var(--line); color: var(--muted); }
+  .msg h4 { font: 600 14px var(--f-head); margin: 10px 0 4px; } .msg h4:first-child { margin-top: 0; }
+  .msg ul, .msg ol { margin: 4px 0; padding-inline-start: 20px; }
+  .msg p { margin: 4px 0; }
+  .job { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 8px 0; background: var(--bg); }
+  .job .t { font: 600 14px var(--f-head); direction: ltr; text-align: start; }
+  .job .c { color: var(--muted); font-size: 13px; direction: ltr; text-align: start; }
+  .job .score { font: 700 13px var(--f-head); color: var(--brand-ink); }
+  .job a { color: var(--brand); font-weight: 600; font-size: 13px; }
+  .pill-ok { background: var(--okbg); color: var(--ok); } .pill-miss { background: var(--warnbg); color: var(--warn); }
+  .quick { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 max(16px, env(safe-area-inset-left)) 8px; }
+  .quick button { border: 1px dashed var(--brand); color: var(--brand-ink); background: transparent; border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+  .composer { border-top: 1px solid var(--line); background: var(--surface); padding: 10px max(16px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right)); display: flex; gap: 8px; align-items: flex-end; }
+  #input { flex: 1; min-width: 0; resize: none; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--bg); max-height: 160px; }
+  .round { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; flex: none; }
+  .round.send { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .round.live { background: #C62828; border-color: #C62828; color: #fff; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(198,40,40,.18); } }
+  @media (prefers-reduced-motion: reduce) { .round.live { animation: none; } }
+  .vstate { font-size: 12px; color: var(--muted); padding: 0 max(16px, env(safe-area-inset-left)) 6px; min-height: 18px; }
+  .note { font-size: 12px; color: var(--muted); }
+  textarea.paste { width: 100%; min-height: 120px; border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: var(--surface); }
+  .hide { display: none !important; }
+  [dir="rtl"] .round.send svg { transform: scaleX(-1); }
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="#" aria-label="CVEEEZ"><span class="mark" id="mk"></span><span class="word" id="wd"></span></a>
+  <span class="tag" data-t="badge">AI مدرّبك المهني</span>
+  <span class="proto" data-t="proto">نموذج تجريبي</span>
+  <span class="grow"></span>
+  <button class="hbtn" id="menu" data-t="menu" type="button">الملف والإعدادات</button>
+  <button class="hbtn" id="voiceToggle" type="button" aria-pressed="false" data-t="voiceOff">الرد الصوتي: متوقف</button>
+  <button class="hbtn" id="lang" type="button">English</button>
+</header>
+<div class="mtabs" id="mtabs"></div>
+<main>
+  <aside id="side">
+    <div class="hide" id="closeSide"><button class="sbtn" type="button" data-t="close">إغلاق</button></div>
+    <h3 data-t="hMode">ماذا تريد اليوم؟</h3>
+    <div class="modes" id="modes"></div>
+    <h3 data-t="hProfile">ملفك المهني</h3>
+    <div class="card" id="profileCard"></div>
+    <h3 data-t="hEngine">محرّك الذكاء الاصطناعي</h3>
+    <div class="card engine" id="engineCard"></div>
+    <h3 data-t="hPrivacy">الخصوصية</h3>
+    <div class="card"><p class="note" data-t="privacy">كل شيء يبقى في متصفحك: السيرة الذاتية والمحادثة لا تُرسلان إلى أي خادم.</p><div class="row"><button class="sbtn" id="clearAll" type="button" data-t="clear">احذف بياناتي ومحادثتي</button></div></div>
+  </aside>
+  <section class="chat">
+    <div id="log" aria-live="polite"></div>
+    <div class="quick" id="quick"></div>
+    <div class="vstate" id="vstate"></div>
+    <div class="composer">
+      <button class="round" id="mic" type="button" aria-label="mic" title="mic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <textarea id="input" rows="1"></textarea>
+      <button class="round send" id="send" type="button" aria-label="send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </section>
+</main>
+<input type="file" id="file" accept=".pdf,.docx" class="hide">
+<script src="lib/geo.js"></script>
+<script src="lib/core.js"></script>
+<script src="coach.js"></script>
+</body>
+</html>
